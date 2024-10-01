@@ -8,12 +8,13 @@ const errResponse = (statusCode, statusMessage, contentType = "text/plain", data
 
 class ErrorHandler {
   invalidRequestError(err) {
-    return errResponse(400, "Bad Request", "text/plain", `${err?err:"invalid request format"}`);
+    const message = err ? err : "Invalid request format";
+    return errResponse(400, "Bad Request", "text/plain", message);
   }
 
-  internalServerError() {
-    return errResponse(500, "Internal Server Error", "text/plain", "Internal server error");
-  }
+  internalServerError(err,statusMessage = "Internal server error") {
+    const message = err ? `${statusMessage}: ${err.message}` : statusMessage;
+    return errResponse(500, "Internal Server Error", "text/plain", message);  }
 
   RouteNotFoundError(path) {
     // console.error(`looks like you forgot to add this route - "${path}" bro`);
