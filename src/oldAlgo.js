@@ -185,7 +185,76 @@ function parseRequest(requestBuffer, cache) {
   }
 
   // Function to log the response time
-module.exports =  function logResponseTime(startTime) {
+ function logResponseTime(startTime) {
   const duration = Date.now() - startTime; // Calculate how much time has passed
   console.log(`Response time: ${duration} ms`); // Log the time in milliseconds
+}
+
+
+// earlier we were splitting requestbuffer everwhrere
+function parseRequestHeader(requestBuffer,cache) {
+  const request = requestBuffer.toString();
+  // const buffer = Buffer.from(request + "\0");
+
+  // const responsePtr = parse_headers(ptr(buffer));
+  // const response = new CString(responsePtr);
+
+  // console.log(JSON.parse(response))
+
+  const [headerSection] = request.split("\r\n\r\n");
+  if (!headerSection) {
+    return { error: "Invalid request format: Missing header section" }
+  }
+
+  const [requestLine, ...headerLine] = headerSection.split("\r\n");
+  if (!requestLine) {
+    return { error: "Invalid request format: Missing request line" }
+  }
+
+  // parse request line
+  const [method, path, version] = requestLine.split(" ");
+
+  if (!method || !path || !version) {
+    return { error: "Invalid request format: Incomplete request line" }
+  }
+
+  const [url, queryString] = path.split("?", 2);
+  const queryParams = new URLSearchParams(queryString);
+  //  generate cache key
+  const cacheKey = `${method}:${url}?${queryParams}:${JSON.stringify(headerLine)}`;
+  if (method === "GET") {
+    const cachedResponse = cache.getCached(cacheKey);
+    if (cachedResponse) {
+      return cachedResponse;
+    }
+  }
+
+  // parse headers and cookie
+  const headers = {};
+  const Cookies = {};
+  for (const line of headerLine) {
+    const [key, value] = line.split(": ");
+    headers[key.toLowerCase()] = value;
+    if (key.toLowerCase() === "cookie") {
+      value.split(";").forEach((cookie) => {
+        const [Cookiekey, Cookievalue] = cookie.trim().split("=");
+        Cookies[Cookiekey] = decodeURIComponent(Cookievalue);
+      });
+    }
+  }
+
+  let params;
+  const res = {
+    method,
+    path,
+    version,
+    headers,
+    query: queryParams,
+    cookies: Cookies,
+    params,
+  };
+  if (method === "GET") {
+    cache.setCache(cacheKey, res);
+  }
+  return res;
 }

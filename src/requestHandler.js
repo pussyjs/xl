@@ -18,12 +18,7 @@ module.exports = async function handleRequest(socket,request,maya,responseHandle
 
   // if  cors config is enabled then--->
   if (maya.corsConfig) {
-    const res = await applyCors(request, responseHandler, maya.corsConfig);
-    if (res) {
-      socket.write(res);
-      socket.end();
-      return;
-    }
+    await applyCors(request, responseHandler, maya.corsConfig);
   }
 
   // execute midlleware here
@@ -73,11 +68,6 @@ function handleResponse(result, responseHandler) {
   }
 }
 
-function sendError(socket, error) {
-  socket.write(error);
-  socket.end();
-  return;
-}
 
 // if user made dynamic rooute -> /route/:id then extract it
 const extractDynamicParams = (routePattern, path) => {
@@ -125,7 +115,7 @@ const applyCors = (req, res, config = {}) => {
     return res.send('',204)
   }
 
-  return null; // Continue with the request
+  return null;
 };
 
 
@@ -143,4 +133,10 @@ async function executeMiddleware(middlewares,context,socket) {
       break; 
     }
   }
+}
+
+function sendError(socket, error) {
+  socket.write(error);
+  socket.end();
+  return;
 }

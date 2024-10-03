@@ -6,14 +6,17 @@ module.exports = async function parseMultipartFormData(requestBuffer, boundary) 
 
     // Convert buffer to a string with 'latin1' encoding to preserve raw binary data.
     const requestString = requestBuffer.toString('latin1');
-    fs.writeFile('request_debug.txt', requestString, (err) => {
-        if (err) {
-            console.error("Error saving request data:", err);
-        } else {
-            console.log("Request data saved to request_debug.txt");
-        }
-    });
+    // fs.writeFile('request_debug.txt', requestString, (err) => {
+    //     if (err) {
+    //         console.error("Error saving request data:", err);
+    //     } else {
+    //         console.log("Request data saved to request_debug.txt");
+    //     }
+    // });
     const parts = requestString.split(`--${boundary}`);
+    console.log('parts start\n');
+    // console.log(parts);
+    console.log('parts end');
     for (let i = 1; i < parts.length; i++) {
         const part = parts[i].trim();
         // Split headers and data

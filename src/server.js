@@ -31,7 +31,7 @@ const rateLimit = (props) => {
       return socket.end()
     }
 
-   await xl.next()
+   xl.next()
   }
 };
 
