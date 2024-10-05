@@ -1,6 +1,7 @@
 const ErrorHandler = require("./errResponse.js");
 const createContext = require('./context.js');
 
+const cache = new Map()
 
 module.exports = async function handleRequest(socket,request,maya,responseHandler) {
   if (request?.path === "/favicon.ico") {
@@ -46,10 +47,7 @@ module.exports = async function handleRequest(socket,request,maya,responseHandle
 
   // if we found handler then call the handler(means controller)
     try {
-      const isAsync = routeHandler.handler.constructor.name === "AsyncFunction";
-      const result = isAsync 
-      ? await routeHandler.handler(context)
-      : routeHandler.handler(context)
+     const result = await routeHandler.handler(context)
 
       if(result) return handleResponse(result,responseHandler);
     } catch (error) {
@@ -71,6 +69,12 @@ function handleResponse(result, responseHandler) {
 
 // if user made dynamic rooute -> /route/:id then extract it
 const extractDynamicParams = (routePattern, path) => {
+  const cacheKey = `${routePattern}-${path}`
+
+  if (cache.has(cacheKey)) {
+    return cache.get(cacheKey)
+  }
+
   const object = {};
   const routeSegments = routePattern.split("/");
   const [pathWithoutQuery] = path.split("?"); // Ignore the query string in the path
@@ -86,7 +90,7 @@ const extractDynamicParams = (routePattern, path) => {
       object[dynamicKey] = pathSegments[index]; // Map the path segment to the key
     }
   });
-
+  cache.set(cacheKey,object)
   return object;
 };
 

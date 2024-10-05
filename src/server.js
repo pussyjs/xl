@@ -36,7 +36,6 @@ const rateLimit = (props) => {
 };
 
 
-
 class Maya {
   constructor() {
     this.sslOptions = null;
@@ -80,8 +79,6 @@ class Maya {
     if (!server) {
       console.error("error while creating server");
     }
-    // we are using setimmediate so it doesnt block the main thread
-    setImmediate(() => {
       server.listen(port, () => {
         if (typeof callback === "function") return callback();
         console.log(
@@ -90,7 +87,6 @@ class Maya {
           }://localhost:${port}`
         );
       });
-    });
     return server;
   }
 
@@ -121,9 +117,9 @@ class Maya {
   }
 
   // set the path of serving static file
-  // serveStatic(path) {
-  //   this.staticFileServeLocation = path;
-  // }
+  serveStatic(path) {
+    this.staticFileServeLocation = path;
+  }
 
   async register(handlerInstance, pathPrefix = "") {
     const routeEntries = Object.entries(handlerInstance.trie.root.children);

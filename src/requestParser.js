@@ -1,15 +1,7 @@
 const parseMultipartFormData  =  require("./multipartFormDataParser.js");
-// const {ptr, CString } = require("bun:ffi");
-// we are using this
 
 function parseRequestHeader(requestBuffer,cache) {
   const request = requestBuffer.toString();
-  // const buffer = Buffer.from(request + "\0");
-
-  // const responsePtr = parse_headers(ptr(buffer));
-  // const response = new CString(responsePtr);
-
-  // console.log(JSON.parse(response))
 
   const headerIndex = request.indexOf("\r\n\r\n");
   if (headerIndex === -1) {
@@ -58,7 +50,7 @@ function parseRequestHeader(requestBuffer,cache) {
     if(key==='cookie'){
       value.split(";").forEach(cookie=>{
         const [cookiekey,cookieValue] = cookie.trim().split("=")
-        cookies[cookiekey] = cookieValue
+        cookies[cookiekey] = cookieValue.split(" ")[0]
       })
     }
 
