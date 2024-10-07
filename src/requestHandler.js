@@ -1,15 +1,16 @@
 const ErrorHandler = require("./errResponse.js");
 const createContext = require('./context.js');
+const context = require("./context.js");
 
 const cache = new Map()
 
-module.exports = async function handleRequest(socket,request,maya,responseHandler) {
+module.exports = async function handleRequest(socket,request,maya) {
   if (request?.path === "/favicon.ico") {
     socket.end();  
     return;
   }
 
-  const context = createContext(request,responseHandler)
+  const context = createContext(socket,request)
 
   // Parsing the request
   const { method, path } = request;
@@ -49,7 +50,7 @@ module.exports = async function handleRequest(socket,request,maya,responseHandle
     try {
      const result = await routeHandler.handler(context)
 
-      if(result) return handleResponse(result,responseHandler);
+      if(result) return handleResponse(socket,result);
     } catch (error) {
       console.error("Error in handler:", error);
       return sendError(socket, 
@@ -58,11 +59,23 @@ module.exports = async function handleRequest(socket,request,maya,responseHandle
 };
 
 
-function handleResponse(result, responseHandler) {
+function handleResponse(socket,result) {
   if (typeof result === 'string') {
-    return responseHandler.send(result);
+    let res =`HTTP/1.1 200 ok\r\n`;
+    res += `Content-Type: text/plain\r\n`; 
+    res += "\r\n";
+    res += result
+    socket.write(res)
+    socket.end()
+    return;
   } else if (typeof result === 'object') {
-    return responseHandler.json(result);
+    let res =`HTTP/1.1 200 ok\r\n`;
+    res += `Content-Type: application/json\r\n`; 
+    res += "\r\n";
+    res += JSON.stringify(result)
+    socket.write(res)
+    socket.end()
+    return
   }
 }
 
@@ -101,10 +114,20 @@ const applyCors = (req, res, config = {}) => {
   const allowedOrigins = config.origin || ["*"];
   const allowedMethods = config.methods || "GET,POST,PUT,DELETE,OPTIONS";
   const allowedHeaders = config.headers || ["Content-Type", "Authorization"];
+  const allowCredentials = config.credentials || false;
+  const exposeHeaders = config.exposeHeaders || [];
 
   // Set CORS headers
   res.setHeader("Access-Control-Allow-Methods", allowedMethods);
   res.setHeader("Access-Control-Allow-Headers", allowedHeaders);
+
+  if(allowCredentials){
+    res.setHeader("Access-Control-Allow-Credentials","true")
+  }
+  if (exposeHeaders.length) {
+    res.setHeader("Access-Control-Expose-Headers", exposeHeaders.join(", "));
+  }
+
   // Check if the origin is allowed
   if (!allowedOrigins.includes("*") && !allowedOrigins.includes(origin)) {
     return res.send("CORS not allowed",403);
