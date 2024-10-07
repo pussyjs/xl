@@ -10,7 +10,7 @@ const cache = new Cache();
 module.exports = async function handleConnection(socket, maya) {
   let buffer = Buffer.alloc(0);
   let parsedHeader;
-  const responseHandler = new ResponseHandler(socket,maya.staticFileServeLocation)
+
   socket.on("data", async (chunk) => {
     // const startTime = Date.now();
     buffer = Buffer.concat([buffer, chunk]);
@@ -34,9 +34,7 @@ module.exports = async function handleConnection(socket, maya) {
   
         const headerPart = buffer.slice(0, headerEndIndex + 4);
      
-
         parsedHeader = parseRequestHeader(headerPart,cache);
-
 
         if (parsedHeader?.error) {
           return parsedRequestError(socket, parsedHeader.error);
@@ -47,7 +45,7 @@ module.exports = async function handleConnection(socket, maya) {
 
         if (parsedHeader.method === "GET" || (contentLength <=0)) {
           // call the reqHandler because we dont need to parse body
-          handleRequest(socket, parsedHeader, maya,responseHandler);
+          handleRequest(socket, parsedHeader, maya);
           parsedHeader=null;
           return;
         }
@@ -64,7 +62,7 @@ module.exports = async function handleConnection(socket, maya) {
         }
 
         const finalResult = {...parsedHeader, ...parsedBody};
-        handleRequest(socket, finalResult, maya,responseHandler);
+        handleRequest(socket, finalResult, maya);
 
         buffer = buffer.slice(contentLength)
         parsedHeader=null;
