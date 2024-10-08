@@ -1,6 +1,5 @@
 const ErrorHandler = require("./errResponse.js");
 const createContext = require('./context.js');
-const context = require("./context.js");
 
 const cache = new Map()
 
@@ -20,7 +19,7 @@ module.exports = async function handleRequest(socket,request,maya) {
 
   // if  cors config is enabled then--->
   if (maya.corsConfig) {
-    await applyCors(request, responseHandler, maya.corsConfig);
+    await applyCors(request, context, maya.corsConfig);
   }
 
   // execute midlleware here
@@ -109,7 +108,7 @@ const extractDynamicParams = (routePattern, path) => {
 
 // we are applying cors here
 // needs to work here more
-const applyCors = (req, res, config = {}) => {
+const applyCors = (req, ctx, config = {}) => {
   const origin = req.headers["origin"];
   const allowedOrigins = config.origin || ["*"];
   const allowedMethods = config.methods || "GET,POST,PUT,DELETE,OPTIONS";
@@ -118,28 +117,28 @@ const applyCors = (req, res, config = {}) => {
   const exposeHeaders = config.exposeHeaders || [];
 
   // Set CORS headers
-  res.setHeader("Access-Control-Allow-Methods", allowedMethods);
-  res.setHeader("Access-Control-Allow-Headers", allowedHeaders);
+  ctx.setHeader("Access-Control-Allow-Methods", allowedMethods);
+  ctx.setHeader("Access-Control-Allow-Headers", allowedHeaders);
 
   if(allowCredentials){
-    res.setHeader("Access-Control-Allow-Credentials","true")
+    ctx.setHeader("Access-Control-Allow-Credentials","true")
   }
   if (exposeHeaders.length) {
-    res.setHeader("Access-Control-Expose-Headers", exposeHeaders.join(", "));
+    ctx.setHeader("Access-Control-Expose-Headers", exposeHeaders.join(", "));
   }
 
   // Check if the origin is allowed
   if (!allowedOrigins.includes("*") && !allowedOrigins.includes(origin)) {
-    return res.send("CORS not allowed",403);
+    return ctx.text("CORS not allowed",403);
   }
 
   // Set Access-Control-Allow-Origin
-  res.setHeader("Access-Control-Allow-Origin", allowedOrigins.includes("*") ? "*" : origin);
+  ctx.setHeader("Access-Control-Allow-Origin", allowedOrigins.includes("*") ? "*" : origin);
 
   // Handle preflight request
   if (req.method === "OPTIONS") {
-    res.setHeader("Access-Control-Max-Age", "86400");
-    return res.send('',204)
+    ctx.setHeader("Access-Control-Max-Age", "86400");
+    return ctx.text('',204)
   }
 
   return null;
@@ -152,10 +151,10 @@ async function executeMiddleware(middlewares,context,socket) {
     try {
       const result = await Promise.resolve(middleware(context, socket));
       if (result || !socket.writable) {
-        break;
+        return;
       }
     } catch (error) {
-      console.error("Middleware error:", error);
+      // console.error("Middleware error:", error);
       sendError(socket,ErrorHandler.internalServerError(error))
       break; 
     }

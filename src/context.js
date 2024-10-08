@@ -8,7 +8,11 @@ const CACHE_TTL = 1 * 60 * 1000;
 const MAX_CACHE_SIZE = 100;
 const cache = new Map();
 
-module.exports = function createContext(socket,request,staticFileServeLocation) {
+module.exports = function createContext(
+  socket,
+  request,
+  staticFileServeLocation
+) {
   const headers = {};
   function _generateResponse(
     data,
@@ -20,11 +24,9 @@ module.exports = function createContext(socket,request,staticFileServeLocation) 
     const cacheKey = `${statusCode}-${contentType}-${data}`;
     const cached = cache.get(cacheKey);
     if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-      if (socket.writable) {
-        socket.write(cached.response);
-        socket.end();
-        return true;
-      }
+      socket.write(cached.response);
+      socket.end();
+      return true;
     }
 
     let response = `HTTP/1.1 ${statusCode} ${statusMessage}\r\n`;
@@ -59,12 +61,11 @@ module.exports = function createContext(socket,request,staticFileServeLocation) 
     }
     cache.set(cacheKey, { response, timestamp: timeStamp });
 
-    if (socket.writable) {
-      socket.write(response);
-      socket.end();
-      return;
-    }
+    socket.write(response);
+    socket.end();
+    return true;
   }
+
   return {
     req: request,
     settedValue: {},
@@ -183,7 +184,7 @@ module.exports = function createContext(socket,request,staticFileServeLocation) 
 
     redirect(url, statusCode = 302) {
       this.setHeader("Location", url);
-      return _generateResponse("", statusCode, "Found", "text/plain")
+      return _generateResponse("", statusCode, "Found", "text/plain");
     },
 
     cookie(name, value, options = {}) {
@@ -198,7 +199,7 @@ module.exports = function createContext(socket,request,staticFileServeLocation) 
       let cookie = `${name}=${value}`;
 
       if (options.expires) {
-        cookie += ` Expires=${options.expires.toUTCString()};`
+        cookie += ` Expires=${options.expires.toUTCString()};`;
       }
 
       if (options.maxAge) {
@@ -260,6 +261,6 @@ module.exports = function createContext(socket,request,staticFileServeLocation) 
         return this.req.params[paramsName] || null;
       }
       return this.req.params;
-    }
-  }
-}
+    },
+  };
+};
