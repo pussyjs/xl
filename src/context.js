@@ -70,6 +70,9 @@ module.exports = function createContext(
     req: request,
     settedValue: {},
     isAuthenticated: false,
+    _parsedCookie:null,
+    _parsedQuery : null,
+    _parsedParams:null,
     next: () => {},
     //
     setHeader(key, value) {
@@ -242,25 +245,64 @@ module.exports = function createContext(
     },
 
     getCookie(cookieName) {
-      if (cookieName) {
-        return this.req.cookies[cookieName] || null;
+      if (!this._parsedCookie) {
+        this._parsedCookie = parseCookie(request.headers['cookie'])
       }
-
-      return this.req.cookies || null;
+      return cookieName ? this._parsedCookie[cookieName] : this._parsedCookie;
     },
 
     getQuery(queryKey) {
-      if (queryKey) {
-        return this.req.query[queryKey] || null;
+      if (!this._parsedQuery) {
+        const queryString = request.path.split("?")[1] || "";
+        this._parsedQuery = new URLSearchParams(queryString);
       }
-      return this.req.query;
+      return queryKey ? this._parsedQuery[queryKey] || null : this._parsedQuery;
     },
 
     getParams(paramsName) {
-      if (paramsName) {
-        return this.req.params[paramsName] || null;
+      if (!this._parsedParams) {
+        this._parsedParams = extractDynamicParams(request.routePattern,request.path)
       }
-      return this.req.params;
+      return paramsName ? this._parsedParams[paramsName] || null : this._parsedParams;
     },
   };
+};
+
+function parseCookie(header){
+  const cookies = {}
+  if (!header) return cookies;
+
+  const cookieArray = header.split(";")
+  cookieArray.forEach(cookie =>{
+    const [cookieName,cookievalue] = cookie.trim().split("=")
+    cookies[cookieName] = cookievalue.split(" ")[0]
+  })
+  return cookies;
+}
+
+
+const extractDynamicParams = (routePattern, path) => {
+  const cacheKey = `${routePattern}-${path}`
+
+  if (cache.has(cacheKey)) {
+    return cache.get(cacheKey)
+  }
+
+  const object = {};
+  const routeSegments = routePattern.split("/");
+  const [pathWithoutQuery] = path.split("?"); // Ignore the query string in the path
+  const pathSegments = pathWithoutQuery.split("/"); // Re-split after removing query
+
+  if (routeSegments.length !== pathSegments.length) {
+    return null; // Path doesn't match the pattern
+  }
+
+  routeSegments.forEach((segment, index) => {
+    if (segment.startsWith(":")) {
+      const dynamicKey = segment.slice(1); // Remove ':' to get the key name
+      object[dynamicKey] = pathSegments[index]; // Map the path segment to the key
+    }
+  });
+  cache.set(cacheKey,object)
+  return object;
 };

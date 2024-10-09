@@ -258,3 +258,8 @@ function parseRequestHeader(requestBuffer,cache) {
   }
   return res;
 }
+
+// const dynamicParams = routeHandler.isDynamic 
+  // ? extractDynamicParams(routeHandler.path,path)
+  // : {}
+  // request.params = dynamicParams 
