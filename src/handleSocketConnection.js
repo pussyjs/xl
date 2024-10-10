@@ -3,7 +3,6 @@ const ErrorHandler = require("./errResponse.js");
 const { Buffer } = require("buffer");
 const Cache = require("./cache.js");
 const {parseRequestBody,parseRequestHeader} = require("./requestParser.js");
-const ResponseHandler = require("./responseHandler.js");
 
 const cache = new Cache();
 
@@ -22,8 +21,8 @@ module.exports = async function handleConnection(socket, maya) {
   });
 
   socket.on("error", (e) => {
-    console.log("error on socket: ", e);
-    socket.end()
+    // console.log("error on socket: ", e);
+    // socket.end()
   });
 
 

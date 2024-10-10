@@ -45,6 +45,7 @@ class Maya {
     this.corsConfig = null;
     this.staticFileServeLocation = null;
     this.trie = new Trie();
+    this.hasMiddleware = false;
   }
 
   async useHttps(options = {}) {
@@ -64,6 +65,19 @@ class Maya {
     }
   }
 
+  compile(){
+    if (this.globalMidlleware.length > 0) {
+      this.hasMiddleware=true
+    }
+
+    for (const [path,middlewares] of this.midllewares.entries()){
+      if (middlewares.length>0) {
+        this.hasMiddleware=true
+        break;
+      }
+    }    
+  }
+
   #createServer(handleConnection) {
     return this.sslOptions
       ? tls.createServer(this.sslOptions, (socket) =>
@@ -75,6 +89,7 @@ class Maya {
   }
 
   listen(port = 3000, callback) {
+    this.compile()
     const server = this.#createServer(handleConnection);
     if (!server) {
       console.error("error while creating server");
