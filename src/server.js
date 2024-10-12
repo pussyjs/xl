@@ -80,11 +80,11 @@ class Maya {
 
   #createServer(handleConnection) {
     return this.sslOptions
-      ? tls.createServer(this.sslOptions, (socket) =>
-          handleConnection(socket, this)
+      ? tls.createServer(this.sslOptions, async (socket) =>
+          await handleConnection(socket, this)
         )
-      : net.createServer((socket) => {
-        handleConnection(socket, this)
+      : net.createServer( async(socket) => {
+       await handleConnection(socket, this)
       });
   }
 

@@ -34,7 +34,7 @@ module.exports = async function handleRequest(socket,request,maya) {
   // find the Handler based on req path
   const routeHandler = maya.trie.search(path.split("?")[0], method);
   if (!routeHandler || !routeHandler.handler) {
-    return sendError(socket,ErrorHandler.RouteNotFoundError())
+    return sendError(socket,ErrorHandler.RouteNotFoundError(path.split("?")[0]))
   }
 
   if (routeHandler?.method !== method) {

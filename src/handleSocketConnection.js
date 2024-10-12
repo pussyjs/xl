@@ -13,7 +13,7 @@ module.exports = async function handleConnection(socket, maya) {
   socket.on("data", async (chunk) => {
     // const startTime = Date.now();
     buffer = Buffer.concat([buffer, chunk]);
-    processBuffer()
+    await processBuffer()
   });
 
   socket.on('close', () => {
@@ -44,7 +44,7 @@ module.exports = async function handleConnection(socket, maya) {
 
         if (parsedHeader.method === "GET" || (contentLength <=0)) {
           // call the reqHandler because we dont need to parse body
-          handleRequest(socket, parsedHeader, maya);
+          await handleRequest(socket, parsedHeader, maya);
           parsedHeader=null;
           return;
         }
@@ -61,7 +61,7 @@ module.exports = async function handleConnection(socket, maya) {
         }
 
         const finalResult = {...parsedHeader, ...parsedBody};
-        handleRequest(socket, finalResult, maya);
+        await handleRequest(socket, finalResult, maya);
 
         buffer = buffer.slice(contentLength)
         parsedHeader=null;
